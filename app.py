@@ -507,17 +507,58 @@ with st.sidebar:
         "<div style='height:1px;background:linear-gradient(90deg,rgba(255,79,145,.65),rgba(154,107,255,.12),transparent);margin:0 0 1.5rem;'></div>",
         unsafe_allow_html=True,
     )
+    # Visible, consistent sidebar navigation icons
+    st.markdown("""
+    <style>
+    [data-testid="stSidebar"] [data-testid="stRadio"] label {
+        padding: .52rem .65rem !important;
+        border-radius: 12px !important;
+        transition: background .2s ease, transform .2s ease;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+        background: rgba(255,79,145,.12) !important;
+        transform: translateX(2px);
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label p {
+        color: #e8e3f4 !important;
+        font-size: .96rem !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label [data-testid="stMarkdownContainer"] {
+        display: flex;
+        align-items: center;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     page = st.radio(
         "EXPLORE",
-       ["Home", "Discover", "Recommendations", "My Watchlist"],
-          format_func=lambda x: {
-          "Home": "🏠   Home",
-          "Discover": "🔎   Discover",
-          "Recommendations": "✨   For You",
-          "My Watchlist": "♡   My Watchlist"
-      }[x],
-      label_visibility="visible",
+        ["Home", "Discover", "Recommendations", "My Watchlist"],
+        format_func=lambda x: {
+            "Home": "⌂     Home",
+            "Discover": "⌕     Discover",
+            "Recommendations": "✧     For You",
+            "My Watchlist": "♡     My Watchlist",
+        }[x],
+        label_visibility="visible",
     )
+    st.markdown(
+        "<div style='height:1px;background:rgba(255,255,255,.08);margin:1.1rem 0 1.2rem;'></div>"
+        "<div style='font-size:.72rem;letter-spacing:.14em;font-weight:800;color:#ff8fbb;margin-bottom:.7rem;'>QUICK ACCESS</div>",
+        unsafe_allow_html=True,
+    )
+    shortcut = st.radio(
+        "QUICK ACCESS",
+        ["Mood Finder", "Find My Movie"],
+        format_func=lambda x: {"Mood Finder": "♡     Mood Finder", "Find My Movie": "✦     Find My Movie"}[x],
+        label_visibility="collapsed",
+        key="cinemuse_quick_access",
+    )
+    if shortcut == "Mood Finder":
+        st.session_state.selected_mood = st.session_state.get("selected_mood", "Any mood")
+        st.session_state.cinemuse_quick_message = "Mood Finder is available on the Home page below the spotlight."
+    else:
+        st.session_state.cinemuse_quick_message = "Find My Movie quiz is available on the Home page under mood discovery."
+    if st.session_state.get("cinemuse_quick_message"):
+        st.caption(st.session_state.cinemuse_quick_message)
 
     st.markdown(
         "<div style='height:1px;background:rgba(255,255,255,.08);margin:1.35rem 0 1.5rem;'></div>"
