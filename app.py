@@ -177,7 +177,7 @@ st.audio(
 st.markdown("""
 <style>
 /* Keep the animation component full-screen and behind all app content. */
-div[data-testid="stElementContainer"]:has(iframe[title="CineMuse animated background"]) {
+div[data-testid="stElementContainer"]:has(iframe) {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
@@ -187,7 +187,7 @@ div[data-testid="stElementContainer"]:has(iframe[title="CineMuse animated backgr
     margin: 0 !important;
     padding: 0 !important;
 }
-div[data-testid="stElementContainer"]:has(iframe[title="CineMuse animated background"]) iframe {
+div[data-testid="stElementContainer"]:has(iframe) iframe {
     width: 100vw !important;
     height: 100vh !important;
     border: 0 !important;
