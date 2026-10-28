@@ -25,14 +25,30 @@ st.markdown("""
     --violet: #9a6bff;
     --line: rgba(255,255,255,.10);
 }
+
 .stApp {
     background:
-      radial-gradient(ellipse at 12% 0%, rgba(119, 69, 205, .18), transparent 34%),
-      radial-gradient(ellipse at 95% 10%, rgba(255, 79, 145, .11), transparent 28%),
-      var(--bg);
+        radial-gradient(ellipse at 12% 5%,
+            rgba(109, 94, 252, 0.28), transparent 38%),
+        radial-gradient(ellipse at 88% 18%,
+            rgba(34, 211, 238, 0.16), transparent 35%),
+        radial-gradient(ellipse at 55% 75%,
+            rgba(244, 114, 182, 0.13), transparent 38%),
+        linear-gradient(135deg, #070914 0%, #0b1020 55%, #100b1b 100%);
+    background-attachment: fixed;
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
 }
+
+[data-testid="stMain"] {
+    background:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+}
+
+
 [data-testid="stHeader"] { background: rgba(9,10,16,.72); }
 .block-container { padding-top: 1.7rem; padding-bottom: 3rem; max-width: 1450px; }
 h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif !important; color: var(--text) !important; }
