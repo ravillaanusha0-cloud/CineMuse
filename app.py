@@ -221,7 +221,7 @@ else:
 st.markdown("""
 <style>
 /* Keep the animation component full-screen and behind all app content. */
-div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.html"]) {
+div[data-testid="stElementContainer"]:has(iframe) {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
@@ -231,7 +231,7 @@ div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.
     margin: 0 !important;
     padding: 0 !important;
 }
-div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.html"]) iframe {
+div[data-testid="stElementContainer"]:has(iframe) iframe {
     width: 100vw !important;
     height: 100vh !important;
     border: 0 !important;
@@ -376,12 +376,17 @@ with st.sidebar:
         "<div style='height:1px;background:linear-gradient(90deg,rgba(255,79,145,.65),rgba(154,107,255,.12),transparent);margin:0 0 1.5rem;'></div>",
         unsafe_allow_html=True,
     )
-    page = st.radio(
-        "EXPLORE",
-        ["Home", "Discover", "Recommendations", "My Watchlist"],
-        format_func=lambda x: {"Home": "🏠   Home", "Discover": "🔎   Discover", "Recommendations": "✨   For You", "My Watchlist": "♡   My Watchlist"}[x],
-        label_visibility="visible",
-    )
+
+     page = st.radio(
+                  "EXPLORE",
+                  ["Home", "Discover", "Recommendations", "My Watchlist"],
+                  format_func=lambda x: {
+                  "Home": "🏠   Home","Discover": "🔎   Discover",
+                  "Recommendations": "✨   For You",
+                  "My Watchlist": "♡   My Watchlist"
+    }[x],
+    label_visibility="visible",
+)
     st.markdown(
         "<div style='height:1px;background:rgba(255,255,255,.08);margin:1.35rem 0 1.5rem;'></div>"
         "<div style='font-size:.72rem;letter-spacing:.14em;font-weight:800;color:#e7e2f5;margin-bottom:.85rem;'>A LITTLE MOVIE MAGIC</div>"
