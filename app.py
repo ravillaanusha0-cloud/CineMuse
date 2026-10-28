@@ -376,19 +376,17 @@ with st.sidebar:
         "<div style='height:1px;background:linear-gradient(90deg,rgba(255,79,145,.65),rgba(154,107,255,.12),transparent);margin:0 0 1.5rem;'></div>",
         unsafe_allow_html=True,
     )
-
-     
-page = st.radio(
-    "EXPLORE",
-    ["Home", "Discover", "Recommendations", "My Watchlist"],
-    format_func=lambda x: {
-        "Home": "🏠   Home",
-        "Discover": "🔎   Discover",
-        "Recommendations": "✨   For You",
-        "My Watchlist": "♡   My Watchlist"
-    }[x],
-    label_visibility="visible",
-)
+    page = st.radio(
+        "EXPLORE",
+       ["Home", "Discover", "Recommendations", "My Watchlist"],
+          format_func=lambda x: {
+          "Home": "🏠   Home",
+          "Discover": "🔎   Discover",
+          "Recommendations": "✨   For You",
+          "My Watchlist": "♡   My Watchlist"
+      }[x],
+      label_visibility="visible",
+    )
 
     st.markdown(
         "<div style='height:1px;background:rgba(255,255,255,.08);margin:1.35rem 0 1.5rem;'></div>"
