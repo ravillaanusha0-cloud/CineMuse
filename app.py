@@ -11,37 +11,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ---------- 4-SECOND CINEMUSE INTRO ----------
-# Show once per browser session; the overlay fades away after four seconds.
-if "cinemuse_intro_shown" not in st.session_state:
-    st.session_state.cinemuse_intro_shown = True
-    st.markdown("""
-    <style>
-    #cinemuse-intro {
-        position: fixed; inset: 0; z-index: 999999;
-        display: flex; align-items: center; justify-content: center;
-        background: radial-gradient(circle at 50% 40%, #282044 0%, #11101d 48%, #070810 100%);
-        animation: cinemuseIntroFade 4s ease forwards;
-        pointer-events: none;
-    }
-    #cinemuse-intro .intro-name {
-        font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.7rem, 8vw, 5.8rem);
-        font-weight: 800; letter-spacing: -.06em; color: #fff;
-        text-shadow: 0 0 32px rgba(255,79,145,.35);
-        animation: cinemuseIntroGlow 1.5s ease-in-out infinite alternate;
-    }
-    #cinemuse-intro .intro-name span { color: #ff4f91; }
-    #cinemuse-intro .intro-tagline { margin-top: 14px; text-align: center; color: #c7bfdc;
-        font: 600 .78rem 'DM Sans', sans-serif; letter-spacing: .24em; }
-    @keyframes cinemuseIntroFade {
-        0%, 78% { opacity: 1; visibility: visible; }
-        100% { opacity: 0; visibility: hidden; }
-    }
-    @keyframes cinemuseIntroGlow { from { transform: scale(.98); opacity: .88; } to { transform: scale(1.02); opacity: 1; } }
-    @media (prefers-reduced-motion: reduce) { #cinemuse-intro { animation-duration: 4s; } }
-    </style>
-    <div id="cinemuse-intro"><div><div class="intro-name">Cine<span>Muse</span></div><div class="intro-tagline">YOUR NEXT STORY STARTS HERE</div></div></div>
-    """, unsafe_allow_html=True)
+# ---------- CINEMUSE INTRO + SOUND ----------
+# The coordinated intro is rendered with the animated background below.
 
 # ---------- CINEMATIC THEME ----------
 st.markdown("""
@@ -197,111 +168,116 @@ footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- CINEMUSE WELCOME SOUND ----------
-# Resolve the WAV beside app.py, even when Streamlit Cloud starts from another folder.
-audio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mixkit-relaxing-harp-sweep-2628.wav")
-if os.path.isfile(audio_path):
-    try:
-        with open(audio_path, "rb") as audio_file:
-            welcome_audio = audio_file.read()
-        st.audio(welcome_audio, format="audio/wav", autoplay=False)
-    except OSError:
-        st.warning("The welcome sound could not be loaded. Please check the WAV file in your repository.")
-else:
-    st.warning("Welcome sound file is missing. Upload mixkit-relaxing-harp-sweep-2628.wav beside app.py in GitHub.")
-
-# ---------- ANIMATED AURORA / NETWORK BACKGROUND ----------
-# This iframe runs the supplied HTML/CSS/JavaScript animation separately from Streamlit.
-# The iframe is positioned behind the app using the CSS selector below.
-st.markdown("""
-<style>
-/* Keep the animation component full-screen and behind all app content. */
-div[data-testid="stElementContainer"]:has(iframe) {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 0 !important;
-    pointer-events: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-div[data-testid="stElementContainer"]:has(iframe) iframe {
-    width: 100vw !important;
-    height: 100vh !important;
-    border: 0 !important;
-    background: transparent !important;
-    pointer-events: none !important;
-}
-/* Place Streamlit UI above the decorative background. */
-[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="stMain"] {
-    position: relative;
-    z-index: 1;
-}
-[data-testid="stMain"] { background: transparent !important; }
-</style>
-""", unsafe_allow_html=True)
-
+# ---------- CINEMUSE CINEMATIC INTRO + ANIMATED BACKGROUND ----------
+# One component coordinates the logo reveal, sound effect, and background.
+# Sound starts after the visitor clicks Enter, because browsers block autoplay.
 import streamlit.components.v1 as components
 
-components.html(r'''
+components.html(r"""
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-:root { --bg:#070914; --c1:#6d5efc; --c2:#22d3ee; --c3:#f472b6; }
 * { box-sizing:border-box; margin:0; }
-html, body { width:100%; height:100%; background:transparent; color:#e8eaf6; font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif; overflow:hidden; }
-.bg { position:fixed; inset:0; z-index:0; overflow:hidden; background:var(--bg); pointer-events:none; }
-.blob { position:absolute; width:55vmax; height:55vmax; border-radius:50%; filter:blur(90px); opacity:.45; will-change:transform; animation:drift 24s ease-in-out infinite alternate; }
-.b1 { background:var(--c1); top:-20vmax; left:-15vmax; }
-.b2 { background:var(--c2); bottom:-25vmax; right:-15vmax; animation-duration:30s; opacity:.35; }
-.b3 { background:var(--c3); top:30%; left:45%; width:35vmax; height:35vmax; animation-duration:36s; opacity:.22; }
-@keyframes drift { from { transform:translate3d(0,0,0) scale(1); } to { transform:translate3d(8vmax,6vmax,0) scale(1.18); } }
-.grid { position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px); background-size:56px 56px; -webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 75%); mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 75%); }
-#net { position:absolute; inset:0; width:100%; height:100%; }
-.vignette { position:absolute; inset:0; background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.48) 100%); }
-.grain { position:absolute; inset:0; opacity:.06; mix-blend-mode:overlay; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
-@media (prefers-reduced-motion: reduce) { .blob { animation:none; } }
+html,body { width:100%;height:100%;overflow:hidden;background:transparent;font-family:system-ui,-apple-system,Segoe UI,sans-serif; }
+.bg { position:fixed;inset:0;z-index:0;overflow:hidden;background:#070914;pointer-events:none; }
+.blob { position:absolute;width:55vmax;height:55vmax;border-radius:50%;filter:blur(90px);opacity:.38;animation:drift 24s ease-in-out infinite alternate; }
+.b1 { background:#6d5efc;top:-20vmax;left:-15vmax; }
+.b2 { background:#22d3ee;bottom:-25vmax;right:-15vmax;animation-duration:30s;opacity:.28; }
+.b3 { background:#f472b6;top:30%;left:45%;width:35vmax;height:35vmax;animation-duration:36s;opacity:.19; }
+@keyframes drift { from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(8vmax,6vmax,0) scale(1.18)} }
+.grid { position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 75%); }
+#net { position:absolute;inset:0;width:100%;height:100%; }
+.vignette { position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.48) 100%); }
+#intro { position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle at 50% 42%,rgba(40,32,68,.96),rgba(12,11,22,.98) 58%,#070810 100%);opacity:1;visibility:visible;transition:opacity 1s ease,visibility 1s ease; }
+#intro.hide { opacity:0;visibility:hidden;pointer-events:none; }
+.intro-inner { padding:24px;animation:arrive 1.15s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes arrive { from{opacity:0;transform:translateY(18px) scale(.94);filter:blur(8px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)} }
+.logo { color:#fff;font-size:clamp(3rem,9vw,6rem);font-weight:850;letter-spacing:-.075em;text-shadow:0 0 34px rgba(255,79,145,.3); }
+.logo span { color:#ff4f91; }
+.tag { margin-top:12px;color:#c7bfdc;font-size:.72rem;font-weight:700;letter-spacing:.25em; }
+#enter { margin-top:34px;padding:13px 24px;border:1px solid rgba(255,255,255,.23);border-radius:999px;color:#fff;background:linear-gradient(100deg,rgba(255,79,145,.25),rgba(154,107,255,.3));font-weight:700;letter-spacing:.08em;cursor:pointer;transition:transform .2s,box-shadow .2s; }
+#enter:hover { transform:translateY(-2px);box-shadow:0 0 30px rgba(255,79,145,.25); }
+.hint { margin-top:12px;color:#9693a9;font-size:.76rem; }
+@media(prefers-reduced-motion:reduce){.blob{animation:none}.intro-inner{animation:none}}
 </style>
 </head>
 <body>
-<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grid"></div><canvas id="net"></canvas><div class="vignette"></div><div class="grain"></div></div>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grid"></div><canvas id="net"></canvas><div class="vignette"></div></div>
+<div id="intro"><div class="intro-inner">
+  <div class="logo">Cine<span>Muse</span></div>
+  <div class="tag">YOUR NEXT STORY STARTS HERE</div>
+  <button id="enter" type="button">▶ &nbsp; ENTER CINEMUSE</button>
+  <div class="hint">Turn up your sound for the full experience</div>
+</div></div>
 <script>
 (() => {
-  const cv=document.getElementById('net'), ctx=cv.getContext('2d');
+  const cv=document.getElementById('net'),ctx=cv.getContext('2d');
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let W=0,H=0,DPR=1,nodes=[],mouse={x:-9999,y:-9999};
+  let W=0,H=0,DPR=1,nodes=[],mouse={x:-9999,y:-9999},started=false;
   const COLORS=['109,94,252','34,211,238','244,114,182'];
   function resize(){
-    DPR=Math.min(devicePixelRatio||1,2); W=cv.clientWidth; H=cv.clientHeight;
-    cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
-    const count=Math.round(Math.min(110,(W*H)/16000));
-    nodes=Array.from({length:count},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*1.8+.8,c:COLORS[(Math.random()*COLORS.length)|0],p:Math.random()*Math.PI*2}));
+    DPR=Math.min(devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;
+    cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+    const count=Math.round(Math.min(95,(W*H)/18000));
+    nodes=Array.from({length:count},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,r:Math.random()*1.5+.7,c:COLORS[(Math.random()*COLORS.length)|0],p:Math.random()*Math.PI*2}));
   }
   function frame(t){
-    ctx.clearRect(0,0,W,H); const LINK=Math.min(150,W/6);
+    ctx.clearRect(0,0,W,H);const LINK=Math.min(150,W/6);
     for(let i=0;i<nodes.length;i++){
       const a=nodes[i];
-      if(!reduce){ a.x+=a.vx; a.y+=a.vy; if(a.x<0||a.x>W)a.vx*=-1; if(a.y<0||a.y>H)a.vy*=-1; const dx=a.x-mouse.x,dy=a.y-mouse.y,d=Math.hypot(dx,dy); if(d<140&&d>0){a.x+=dx/d*1.2;a.y+=dy/d*1.2;} }
-      for(let j=i+1;j<nodes.length;j++){const b=nodes[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<LINK){ctx.strokeStyle=`rgba(${a.c},${(1-d/LINK)*.35})`;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}
-      const pulse=.6+.4*Math.sin(t/900+a.p); const g=ctx.createRadialGradient(a.x,a.y,0,a.x,a.y,a.r*7);g.addColorStop(0,`rgba(${a.c},${.55*pulse})`);g.addColorStop(1,`rgba(${a.c},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(a.x,a.y,a.r*7,0,Math.PI*2);ctx.fill();ctx.fillStyle=`rgba(255,255,255,${.7*pulse+.3})`;ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fill();
+      if(!reduce){a.x+=a.vx;a.y+=a.vy;if(a.x<0||a.x>W)a.vx*=-1;if(a.y<0||a.y>H)a.vy*=-1;const dx=a.x-mouse.x,dy=a.y-mouse.y,d=Math.hypot(dx,dy);if(d<140&&d>0){a.x+=dx/d*.6;a.y+=dy/d*.6;}}
+      for(let j=i+1;j<nodes.length;j++){const b=nodes[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<LINK){ctx.strokeStyle=`rgba(${a.c},${(1-d/LINK)*.28})`;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}
+      const pulse=.6+.4*Math.sin(t/900+a.p);ctx.fillStyle=`rgba(${a.c},${.65*pulse})`;ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fill();
     }
     if(!reduce)requestAnimationFrame(frame);
   }
+  function cinematicSound(){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return;
+    const ac=new AC();if(ac.state==='suspended')ac.resume();
+    const now=ac.currentTime;
+    // Original synthesized cinematic impact: low boom + airy rising sweep.
+    const master=ac.createGain();master.gain.setValueAtTime(.0001,now);master.gain.exponentialRampToValueAtTime(.7,now+.035);master.gain.exponentialRampToValueAtTime(.0001,now+2.1);master.connect(ac.destination);
+    const osc=ac.createOscillator(),gain=ac.createGain();osc.type='sine';osc.frequency.setValueAtTime(105,now);osc.frequency.exponentialRampToValueAtTime(38,now+1.25);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.95,now+.025);gain.gain.exponentialRampToValueAtTime(.0001,now+1.65);osc.connect(gain);gain.connect(master);osc.start(now);osc.stop(now+1.7);
+    const sweep=ac.createOscillator(),sg=ac.createGain();sweep.type='triangle';sweep.frequency.setValueAtTime(420,now);sweep.frequency.exponentialRampToValueAtTime(95,now+.85);sg.gain.setValueAtTime(.0001,now);sg.gain.exponentialRampToValueAtTime(.13,now+.06);sg.gain.exponentialRampToValueAtTime(.0001,now+1.05);sweep.connect(sg);sg.connect(master);sweep.start(now);sweep.stop(now+1.1);
+    const length=Math.floor(ac.sampleRate*.65),buffer=ac.createBuffer(1,length,ac.sampleRate),data=buffer.getChannelData(0);
+    for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*(1-i/length);
+    const noise=ac.createBufferSource(),filter=ac.createBiquadFilter(),ng=ac.createGain();noise.buffer=buffer;filter.type='lowpass';filter.frequency.setValueAtTime(1400,now);filter.frequency.exponentialRampToValueAtTime(180,now+.62);ng.gain.setValueAtTime(.0001,now);ng.gain.exponentialRampToValueAtTime(.18,now+.02);ng.gain.exponentialRampToValueAtTime(.0001,now+.65);noise.connect(filter);filter.connect(ng);ng.connect(master);noise.start(now);
+    setTimeout(()=>ac.close().catch(()=>{}),2500);
+  }
+  document.getElementById('enter').addEventListener('click',()=>{
+    if(started)return;started=true;
+    cinematicSound();
+    try{sessionStorage.setItem('cinemuse_intro_done','1');}catch(e){}
+    document.getElementById('intro').classList.add('hide');
+    try{
+      const frame=window.frameElement;
+      const container=frame&&parent.document.querySelector('div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.html"])');
+      if(container){container.style.zIndex='999999';setTimeout(()=>{container.style.zIndex='0';},1100);}
+    }catch(e){}
+  });
+  function lowerIntroLayer(){
+    try{
+      const frame=window.frameElement;
+      const container=frame&&parent.document.querySelector('div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.html"])');
+      if(container)container.style.zIndex='0';
+    }catch(e){}
+  }
+  if(sessionStorage.getItem('cinemuse_intro_done')==='1'){
+    document.getElementById('intro').classList.add('hide');
+    lowerIntroLayer();
+  }
   addEventListener('resize',resize);
-  // Listen on the parent document too, so pointer response works while the iframe is behind the UI.
-  try { parent.document.addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;}); } catch(e) {}
   addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
-  addEventListener('pointerleave',()=>{mouse.x=mouse.y=-9999;});
-  resize(); requestAnimationFrame(frame);
+  resize();requestAnimationFrame(frame);
 })();
 </script>
 </body>
 </html>
-''', height=1, scrolling=False)
+""", height=1, scrolling=False)
 
 # ---------- MOVIE DATA ----------
 movies = pd.DataFrame([
