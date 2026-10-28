@@ -518,12 +518,30 @@ with right:
     st.markdown("<div style='text-align:right;font-size:2.4rem;padding-top:.2rem;'>✦</div>", unsafe_allow_html=True)
 
 if page == "Home":
+    # Compact, right-aligned home heading so movie browsing gets priority.
     st.markdown("""
-    <div class="hero">
-      <div class="hero-orb">🎬</div>
+    <style>
+    .hero-compact {
+        width: min(560px, 62%);
+        margin: 0 0 1.1rem auto;
+        padding: 8px 0 10px 12px;
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        text-align: right;
+    }
+    .hero-compact .hero-kicker { font-size: .68rem; margin-bottom: 5px; }
+    .hero-compact .hero-title { font-size: clamp(1.35rem, 2.4vw, 2rem); line-height: 1.15; margin: 0 0 6px; }
+    .hero-compact .hero-copy { font-size: .86rem; line-height: 1.45; margin-left: auto; max-width: 440px; }
+    @media (max-width: 700px) {
+        .hero-compact { width: 100%; padding: 8px 0 10px; }
+    }
+    </style>
+    <div class="hero-compact">
       <div class="hero-kicker">A different kind of movie night</div>
       <div class="hero-title">Find stories that feel like <span style="color:#ff77aa;">you.</span></div>
-      <div class="hero-copy">Explore your next favourite film, follow a feeling, and let smart recommendations lead you to your next watch.</div>
+      <div class="hero-copy">Follow a feeling. Find your next favourite.</div>
     </div>
     """, unsafe_allow_html=True)
 elif page == "Discover":
