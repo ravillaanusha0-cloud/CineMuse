@@ -179,12 +179,15 @@ div.stButton > button:hover {
     background: linear-gradient(155deg, rgba(27,29,44,.98), rgba(16,17,27,.98));
     border: 1px solid rgba(255,255,255,.10);
     border-radius: 18px;
-    padding: 1.15rem 1.1rem 1rem;
-    min-height: 220px;
+    padding: 0;
+    min-height: 0;
+    overflow: hidden;
     box-shadow: 0 10px 26px rgba(0,0,0,.13);
     margin-bottom: .6rem;
 }
-.movie-icon { font-size: 1.65rem; margin-bottom: .45rem; }
+.movie-poster { display:block; width:100%; aspect-ratio:2/3; object-fit:cover; background:#181b29; }
+.movie-info { padding: 1.05rem 1.1rem 1rem; }
+.movie-icon { font-size: 3rem; text-align:center; padding: 1.2rem 0 .4rem; }
 .movie-title { font-family: 'Space Grotesk', sans-serif; color: #fff; font-size: 1.13rem; font-weight: 700; margin-bottom: .3rem; }
 .movie-meta { color: #ff91ba; font-size: .78rem; font-weight: 700; letter-spacing: .03em; margin-bottom: .6rem; }
 .movie-description { color: #bfc2d3; font-size: .87rem; line-height: 1.5; min-height: 3.9rem; }
@@ -419,21 +422,25 @@ movies["trailer_url"] = movies["title"].apply(
 )
 
 
-def show_poster(movie):
-    """Display the TMDB poster with spacing; use the icon if no poster is available."""
+def show_movie_card(movie, label="CINEMUSE PICK"):
+    """Render poster and all movie information as one connected vertical card."""
     poster_url = movie.get("poster_url")
-    has_poster = isinstance(poster_url, str) and bool(poster_url)
-    if has_poster:
-        st.image(poster_url, use_container_width=True)
-        # Keep the app's title card clearly below the poster artwork.
-        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+    if isinstance(poster_url, str) and poster_url:
+        poster_html = f'<img class="movie-poster" src="{poster_url}" alt="{movie["title"]} poster">'
     else:
-        st.markdown(
-            f"<div class='movie-icon' style='font-size:3rem;text-align:center;padding:.7rem 0;'>"
-            f"{movie['icon']}</div>",
-            unsafe_allow_html=True,
-        )
-    return has_poster
+        poster_html = f'<div class="movie-icon">{movie["icon"]}</div>'
+
+    st.markdown(f"""
+    <div class="movie-card">
+      {poster_html}
+      <div class="movie-info">
+        <div class="movie-title">{movie['title']}</div>
+        <div class="movie-meta">{movie['year']} &nbsp;·&nbsp; {movie['genre']}</div>
+        <div class="movie-description">{movie['description']}</div>
+        <span class="pill">{label}</span>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def show_trailer(movie):
@@ -562,16 +569,7 @@ if page in ["Home", "Discover"]:
         cols = st.columns(3)
         for i, (_, movie) in enumerate(filtered.iterrows()):
             with cols[i % 3]:
-                has_poster = show_poster(movie)
-                st.markdown(f"""
-                <div class="movie-card">
-                  {'' if has_poster else f"<div class='movie-icon'>{movie['icon']}</div>"}
-                  <div class="movie-title">{movie['title']}</div>
-                  <div class="movie-meta">{movie['year']} &nbsp;·&nbsp; {movie['genre']}</div>
-                  <div class="movie-description">{movie['description']}</div>
-                  <span class="pill">CINEMUSE PICK</span>
-                </div>
-                """, unsafe_allow_html=True)
+                show_movie_card(movie, "CINEMUSE PICK")
                 if st.button("＋  Add to watchlist", key=f"save_{movie['title']}", use_container_width=True):
                     if movie["title"] not in st.session_state.watchlist:
                         st.session_state.watchlist.append(movie["title"])
@@ -592,16 +590,7 @@ if page == "Recommendations":
     for pos, index in enumerate(recommended_indices):
         movie = movies.iloc[index]
         with cols[pos % 3]:
-            has_poster = show_poster(movie)
-            st.markdown(f"""
-            <div class="movie-card">
-              {'' if has_poster else f"<div class='movie-icon'>{movie['icon']}</div>"}
-              <div class="movie-title">{movie['title']}</div>
-              <div class="movie-meta">{movie['year']} &nbsp;·&nbsp; {movie['genre']}</div>
-              <div class="movie-description">{movie['description']}</div>
-              <span class="pill">SIMILAR STORY</span>
-            </div>
-            """, unsafe_allow_html=True)
+            show_movie_card(movie, "SIMILAR STORY")
             if st.button("＋  Add to watchlist", key=f"rec_{movie['title']}", use_container_width=True):
                 if movie["title"] not in st.session_state.watchlist:
                     st.session_state.watchlist.append(movie["title"])
@@ -619,14 +608,7 @@ if page == "My Watchlist":
         for title in list(st.session_state.watchlist):
             movie = movies[movies["title"] == title].iloc[0]
             with st.container():
-                show_poster(movie)
-                st.markdown(f"""
-                <div class="movie-card" style="min-height:0; margin-top:4px;">
-                  <div class="movie-title">{movie['icon']} &nbsp; {movie['title']}</div>
-                  <div class="movie-meta">{movie['year']} &nbsp;·&nbsp; {movie['genre']}</div>
-                  <div class="movie-description">{movie['description']}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                show_movie_card(movie, "IN YOUR WATCHLIST")
                 show_trailer(movie)
                 if st.button("Remove from watchlist", key=f"remove_{title}"):
                     st.session_state.watchlist.remove(title)
