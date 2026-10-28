@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -165,11 +166,12 @@ footer { visibility: hidden; }
 """, unsafe_allow_html=True)
 
 # ---------- CINEMUSE WELCOME SOUND ----------
-st.audio(
-    "mixkit-relaxing-harp-sweep-2628.wav",
-    format="audio/wav",
-    autoplay=True,
-)
+audio_file = "mixkit-relaxing-harp-sweep-2628.wav"
+
+if os.path.exists(audio_file):
+    st.audio(audio_file, format="audio/wav", autoplay=True)
+else:
+    st.error("Audio file not found: " + audio_file)
 
 # ---------- ANIMATED AURORA / NETWORK BACKGROUND ----------
 # This iframe runs the supplied HTML/CSS/JavaScript animation separately from Streamlit.
