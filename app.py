@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import requests
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -326,31 +327,125 @@ movies = pd.DataFrame([
 
 movies["features"] = movies["genre"] + " " + movies["description"]
 
-# ---------- MOVIE TRAILERS ----------
-# Verified YouTube trailer IDs are embedded directly in CineMuse.
-# For titles without a verified ID, provide a YouTube search link instead of guessing a video.
+# ---------- TMDB POSTERS AND MOVIE TRAILERS ----------
+# Add TMDB_API_KEY to Streamlit Secrets or as an environment variable.
+# Streamlit Cloud: App settings -> Secrets:
+# TMDB_API_KEY = "your_tmdb_v3_api_key"
+try:
+    TMDB_API_KEY = st.secrets.get("TMDB_API_KEY", os.getenv("TMDB_API_KEY", ""))
+except Exception:
+    # Allows the app to run locally even before a secrets file is created.
+    TMDB_API_KEY = os.getenv("TMDB_API_KEY", "")
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def get_tmdb_movie_data(title, year, api_key):
+    """Get a movie poster and YouTube trailer from TMDB; cache results for one day."""
+    if not api_key:
+        return {"poster_url": None, "trailer_id": None}
+
+    try:
+        search_response = requests.get(
+            "https://api.themoviedb.org/3/search/movie",
+            params={"api_key": api_key, "query": title, "year": int(year)},
+            timeout=10,
+        )
+        search_response.raise_for_status()
+        results = search_response.json().get("results", [])
+        if not results:
+            return {"poster_url": None, "trailer_id": None}
+
+        # Prefer an exact title match, otherwise use TMDB's first search result.
+        match = next(
+            (item for item in results
+             if item.get("title", "").casefold() == title.casefold()),
+            results[0],
+        )
+        poster_path = match.get("poster_path")
+        poster_url = (
+            f"https://image.tmdb.org/t/p/w500{poster_path}"
+            if poster_path else None
+        )
+
+        video_response = requests.get(
+            f"https://api.themoviedb.org/3/movie/{match['id']}/videos",
+            params={"api_key": api_key, "language": "en-US"},
+            timeout=10,
+        )
+        video_response.raise_for_status()
+        videos = video_response.json().get("results", [])
+
+        # Prefer an official YouTube trailer, then any YouTube trailer.
+        youtube_videos = [
+            video for video in videos
+            if video.get("site") == "YouTube"
+            and video.get("type") == "Trailer"
+            and video.get("key")
+        ]
+        trailer = next(
+            (video for video in youtube_videos if video.get("official")),
+            youtube_videos[0] if youtube_videos else None,
+        )
+
+        return {
+            "poster_url": poster_url,
+            "trailer_id": trailer.get("key") if trailer else None,
+        }
+    except (requests.RequestException, ValueError, KeyError, TypeError):
+        return {"poster_url": None, "trailer_id": None}
+
+
+# Keep known trailer IDs as a fallback if TMDB has no trailer for a title.
 trailer_ids = {
     "Inception": "ig1GrJI5dSg",
     "Interstellar": "zSWdZVtXT7E",
     "Pride and Prejudice": "1dYv5u6v55Y",
     "Toy Story": "KYz2wyBy3kc",
 }
-movies["trailer_id"] = movies["title"].map(trailer_ids)
+
+tmdb_data = [
+    get_tmdb_movie_data(row["title"], row["year"], TMDB_API_KEY)
+    for _, row in movies.iterrows()
+]
+movies["poster_url"] = [item["poster_url"] for item in tmdb_data]
+movies["tmdb_trailer_id"] = [item["trailer_id"] for item in tmdb_data]
+movies["trailer_id"] = movies.apply(
+    lambda row: row["tmdb_trailer_id"] or trailer_ids.get(row["title"]),
+    axis=1,
+)
 movies["trailer_url"] = movies["title"].apply(
     lambda title: "https://www.youtube.com/results?search_query="
-    + title.replace(" ", "+")
-    + "+official+trailer"
+    + requests.utils.quote(title + " official trailer")
 )
 
+
+def show_poster(movie):
+    """Display the TMDB poster when available; otherwise keep the original icon."""
+    poster_url = movie.get("poster_url")
+    if isinstance(poster_url, str) and poster_url:
+        st.image(poster_url, use_column_width=True)
+    else:
+        st.markdown(
+            f"<div class='movie-icon' style='font-size:3rem;text-align:center;padding:.7rem 0;'>"
+            f"{movie['icon']}</div>",
+            unsafe_allow_html=True,
+        )
+
+
 def show_trailer(movie):
-    """Display a trailer inline when a verified video ID is available."""
+    """Play the movie trailer inside CineMuse when a YouTube ID is available."""
     with st.expander("▶ Watch trailer on this page", expanded=False):
         trailer_id = movie.get("trailer_id")
-        if pd.notna(trailer_id) and trailer_id:
+        if isinstance(trailer_id, str) and trailer_id:
             st.video(f"https://www.youtube.com/watch?v={trailer_id}")
         else:
-            st.info("An embedded trailer is not configured for this title yet.")
-            st.link_button("Find official trailer on YouTube", movie["trailer_url"], use_container_width=True)
+            st.info("An embedded trailer is not available for this movie yet.")
+            st.link_button(
+                "Find official trailer on YouTube",
+                movie["trailer_url"],
+                use_container_width=True,
+            )
+
 vectorizer = TfidfVectorizer(stop_words="english")
 movie_vectors = vectorizer.fit_transform(movies["features"])
 similarity = cosine_similarity(movie_vectors)
@@ -463,6 +558,7 @@ if page in ["Home", "Discover"]:
         cols = st.columns(3)
         for i, (_, movie) in enumerate(filtered.iterrows()):
             with cols[i % 3]:
+                show_poster(movie)
                 st.markdown(f"""
                 <div class="movie-card">
                   <div class="movie-icon">{movie['icon']}</div>
@@ -492,6 +588,7 @@ if page == "Recommendations":
     for pos, index in enumerate(recommended_indices):
         movie = movies.iloc[index]
         with cols[pos % 3]:
+            show_poster(movie)
             st.markdown(f"""
             <div class="movie-card">
               <div class="movie-icon">{movie['icon']}</div>
@@ -518,6 +615,7 @@ if page == "My Watchlist":
         for title in list(st.session_state.watchlist):
             movie = movies[movies["title"] == title].iloc[0]
             with st.container():
+                show_poster(movie)
                 st.markdown(f"""
                 <div class="movie-card" style="min-height:0;">
                   <div class="movie-title">{movie['icon']} &nbsp; {movie['title']}</div>
