@@ -1,6 +1,36 @@
 import streamlit as st
 import pandas as pd
-color: var(--text);
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+st.set_page_config(
+    page_title="CineMuse | Movie Discovery",
+    page_icon="🎬",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# ---------- CINEMATIC THEME ----------
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg: #090a10;
+    --panel: #12141f;
+    --panel2: #181b29;
+    --text: #f5f5fb;
+    --muted: #a5a9bd;
+    --pink: #ff4f91;
+    --violet: #9a6bff;
+    --line: rgba(255,255,255,.10);
+}
+.stApp {
+    background:
+      radial-gradient(ellipse at 12% 0%, rgba(119, 69, 205, .18), transparent 34%),
+      radial-gradient(ellipse at 95% 10%, rgba(255, 79, 145, .11), transparent 28%),
+      var(--bg);
+    color: var(--text);
     font-family: 'DM Sans', sans-serif;
 }
 [data-testid="stHeader"] { background: rgba(9,10,16,.72); }
@@ -68,6 +98,34 @@ div.stButton > button:hover {
     float: right;
     font-size: 5.5rem;
     padding: .6rem 1rem;
+    filter: drop-shadow(0 0 24px rgba(255,79,145,.28));
+}
+.section-eyebrow {
+    color: #ff8fbb; font-size: .72rem; font-weight: 700;
+    letter-spacing: .17em; text-transform: uppercase; margin-bottom: .2rem;
+}
+.section-title { font-size: 1.55rem; font-weight: 700; margin: 0 0 .25rem 0; }
+.section-copy { color: var(--muted); font-size: .92rem; margin-bottom: .9rem; }
+.genre-note { color: #b8bbcf; font-size: .86rem; margin: .1rem 0 .65rem; }
+.genre-active div.stButton > button {
+    background: linear-gradient(110deg, #ff4f91, #9a6bff);
+    color: white; border-color: transparent;
+    box-shadow: 0 5px 20px rgba(255,79,145,.20);
+}
+.genre-chip div.stButton > button { min-height: 2.75rem; font-size: .88rem; }
+.movie-card {
+    background: linear-gradient(155deg, rgba(27,29,44,.98), rgba(16,17,27,.98));
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px;
+    padding: 1.15rem 1.1rem 1rem;
+    min-height: 220px;
+    box-shadow: 0 10px 26px rgba(0,0,0,.13);
+    margin-bottom: .6rem;
+}
+.movie-icon { font-size: 1.65rem; margin-bottom: .45rem; }
+.movie-title { font-family: 'Space Grotesk', sans-serif; color: #fff; font-size: 1.13rem; font-weight: 700; margin-bottom: .3rem; }
+.movie-meta { color: #ff91ba; font-size: .78rem; font-weight: 700; letter-spacing: .03em; margin-bottom: .6rem; }
+.movie-description { color: #bfc2d3; font-size: .87rem; line-height: 1.5; min-height: 3.9rem; }
 .pill {
     display: inline-block; border: 1px solid rgba(255,111,165,.32);
     background: rgba(255,79,145,.10); color: #ff9bc0;
@@ -140,7 +198,7 @@ with right:
 if page == "Home":
     st.markdown("""
     <div class="hero">
-<div class="hero-orb">🎬</div>
+      <div class="hero-orb">🎬</div>
       <div class="hero-kicker">A different kind of movie night</div>
       <div class="hero-title">Find stories that feel like <span style="color:#ff77aa;">you.</span></div>
       <div class="hero-copy">Explore your next favourite film, follow a feeling, and let smart recommendations lead you to your next watch.</div>
@@ -254,4 +312,3 @@ if page == "My Watchlist":
                     st.rerun()
 
 st.markdown("<div style='text-align:center;color:#777b91;font-size:.78rem;padding:2rem 0 0;'>CINEMUSE &nbsp; ✦ &nbsp; DISCOVER SOMETHING THAT MOVES YOU</div>", unsafe_allow_html=True)
-
