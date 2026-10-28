@@ -1,4 +1,6 @@
-    color: var(--text);
+import streamlit as st
+import pandas as pd
+color: var(--text);
     font-family: 'DM Sans', sans-serif;
 }
 [data-testid="stHeader"] { background: rgba(9,10,16,.72); }
