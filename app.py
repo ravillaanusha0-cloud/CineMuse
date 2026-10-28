@@ -196,6 +196,14 @@ div.stButton > button:hover {
     background: rgba(255,79,145,.10); color: #ff9bc0;
     border-radius: 999px; padding: .25rem .6rem; font-size: .72rem; margin-top: .25rem;
 }
+/* Subtle cinematic motion: respectful of reduced-motion settings. */
+.movie-card { transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease; }
+.movie-card:hover { transform: translateY(-5px); box-shadow: 0 18px 38px rgba(154,107,255,.20), 0 0 0 1px rgba(255,79,145,.18); border-color: rgba(255,111,165,.32); }
+div.stButton > button { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(154,107,255,.18); border-color: rgba(255,111,165,.45); }
+@keyframes cineMuseReveal { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+.movie-card { animation: cineMuseReveal .45s ease both; }
+@media (prefers-reduced-motion: reduce) { .movie-card, div.stButton > button { animation: none !important; transition: none !important; } }
 div[data-testid="stAlert"] { border-radius: 14px; }
 hr { border-color: rgba(255,255,255,.10); }
 footer { visibility: hidden; }
@@ -443,19 +451,32 @@ def show_movie_card(movie, label="CINEMUSE PICK"):
     """, unsafe_allow_html=True)
 
 
-def show_trailer(movie):
-    """Play the movie trailer inside CineMuse when a YouTube ID is available."""
-    with st.expander("▶ Watch trailer on this page", expanded=False):
-        trailer_id = movie.get("trailer_id")
-        if isinstance(trailer_id, str) and trailer_id:
-            st.video(f"https://www.youtube.com/watch?v={trailer_id}")
-        else:
-            st.info("An embedded trailer is not available for this movie yet.")
-            st.link_button(
-                "Find official trailer on YouTube",
-                movie["trailer_url"],
-                use_container_width=True,
-            )
+@st.dialog("Watch trailer")
+def trailer_dialog():
+    """Show the selected movie trailer in a focused dialog."""
+    title = st.session_state.get("active_trailer_title")
+    if not title:
+        st.info("Choose a movie to watch its trailer.")
+        return
+    selected = movies[movies["title"] == title]
+    if selected.empty:
+        st.info("This movie is not available in the current collection.")
+        return
+    movie = selected.iloc[0]
+    st.markdown(f"### {movie['title']} ({movie['year']})")
+    trailer_id = movie.get("trailer_id")
+    if isinstance(trailer_id, str) and trailer_id:
+        st.video(f"https://www.youtube.com/watch?v={trailer_id}")
+    else:
+        st.info("An embedded trailer is not available for this movie yet.")
+        st.link_button("Find official trailer on YouTube", movie["trailer_url"], use_container_width=True)
+
+
+def show_trailer(movie, key_suffix="movie"):
+    """Open the selected movie trailer in a dialog instead of expanding the page."""
+    if st.button("▶  Watch trailer", key=f"trailer_{key_suffix}_{movie['title']}", use_container_width=True):
+        st.session_state.active_trailer_title = movie["title"]
+        trailer_dialog()
 
 vectorizer = TfidfVectorizer(stop_words="english")
 movie_vectors = vectorizer.fit_transform(movies["features"])
@@ -465,6 +486,10 @@ if "watchlist" not in st.session_state:
     st.session_state.watchlist = []
 if "selected_genre" not in st.session_state:
     st.session_state.selected_genre = "All"
+if "selected_mood" not in st.session_state:
+    st.session_state.selected_mood = "Any mood"
+if "quiz_result" not in st.session_state:
+    st.session_state.quiz_result = []
 
 # ---------- SIDEBAR ----------
 with st.sidebar:
@@ -551,6 +576,71 @@ elif page == "Recommendations":
 else:
     st.markdown("<div class='hero'><div class='hero-kicker'>Saved for later</div><div class='hero-title'>Your personal watchlist.</div><div class='hero-copy'>All the stories you want to come back to, in one place.</div></div>", unsafe_allow_html=True)
 
+# ---------- FEATURED SPOTLIGHT + MOOD DISCOVERY ----------
+if page == "Home":
+    st.markdown("<div class='section-eyebrow'>TONIGHT'S SPOTLIGHT</div><div class='section-title'>A story worth getting lost in</div>", unsafe_allow_html=True)
+    spotlight_names = ["Interstellar", "Inception", "The Dark Knight", "La La Land", "The Martian"]
+    spotlight_name = st.selectbox("Choose the featured movie", spotlight_names, label_visibility="collapsed", key="spotlight_movie")
+    spotlight_movie = movies[movies["title"] == spotlight_name].iloc[0]
+    spotlight_left, spotlight_right = st.columns([1, 2])
+    with spotlight_left:
+        if isinstance(spotlight_movie.get("poster_url"), str) and spotlight_movie["poster_url"]:
+            st.image(spotlight_movie["poster_url"], use_container_width=True)
+        else:
+            st.markdown(f"<div class='movie-icon'>{spotlight_movie['icon']}</div>", unsafe_allow_html=True)
+    with spotlight_right:
+        st.markdown(f"<div class='section-title'>{spotlight_movie['title']}</div><div class='movie-meta'>{spotlight_movie['year']} · {spotlight_movie['genre']}</div><p style='color:#c4c6d6;line-height:1.7'>{spotlight_movie['description']}</p>", unsafe_allow_html=True)
+        show_trailer(spotlight_movie, "spotlight")
+        if st.button("＋ Add spotlight to watchlist", key="spotlight_save", use_container_width=True):
+            if spotlight_name not in st.session_state.watchlist:
+                st.session_state.watchlist.append(spotlight_name)
+                st.success(f"Added {spotlight_name} to your watchlist.")
+            else:
+                st.info("This movie is already in your watchlist.")
+
+if page in ["Home", "Discover"]:
+    st.markdown("<div class='section-eyebrow'>WHAT ARE YOU IN THE MOOD FOR?</div><div class='section-title'>Let your mood choose</div><div class='genre-note'>Pick a feeling to tune your movie collection.</div>", unsafe_allow_html=True)
+    mood_map = {
+        "Any mood": None,
+        "😊 Feel-good": ["Romance", "Animation", "Adventure"],
+        "🌀 Mind-bending": ["Sci-Fi"],
+        "🌑 Thrilling": ["Action", "Crime", "Horror"],
+        "💗 Emotional": ["Drama", "Romance"],
+        "🚀 Adventurous": ["Adventure", "Sci-Fi", "Animation"],
+    }
+    mood_cols = st.columns(len(mood_map))
+    for idx, mood_name in enumerate(mood_map):
+        with mood_cols[idx]:
+            if st.button(mood_name, key=f"mood_{idx}", use_container_width=True, type="primary" if st.session_state.selected_mood == mood_name else "secondary"):
+                st.session_state.selected_mood = mood_name
+                st.session_state.selected_genre = "All"
+                st.rerun()
+
+    with st.expander("🎟️ Find-my-movie quiz", expanded=False):
+        st.markdown("Answer two quick questions and CineMuse will build a little shortlist for you.")
+        quiz_mood = st.selectbox("What kind of evening is it?", ["Feel-good", "Mind-bending", "Thrilling", "Emotional", "Adventurous"], key="quiz_mood")
+        quiz_genre = st.selectbox("Any genre you want to include?", ["Any genre"] + sorted(movies["genre"].unique().tolist()), key="quiz_genre")
+        if st.button("✨ Find my movie", key="run_movie_quiz", use_container_width=True):
+            quiz_genres = {
+                "Feel-good": ["Romance", "Animation", "Adventure"],
+                "Mind-bending": ["Sci-Fi"],
+                "Thrilling": ["Action", "Crime", "Horror"],
+                "Emotional": ["Drama", "Romance"],
+                "Adventurous": ["Adventure", "Sci-Fi", "Animation"],
+            }[quiz_mood]
+            quiz_matches = movies[movies["genre"].isin(quiz_genres)]
+            if quiz_genre != "Any genre":
+                quiz_matches = quiz_matches[quiz_matches["genre"] == quiz_genre]
+            st.session_state.quiz_result = quiz_matches["title"].tolist()[:5]
+        if st.session_state.quiz_result:
+            st.markdown("**Your movie-night shortlist**")
+            st.write(" · ".join(st.session_state.quiz_result))
+            if st.button("Show these movies in the collection", key="show_quiz_results"):
+                st.session_state.selected_mood = "Any mood"
+                st.session_state.selected_genre = "All"
+                st.session_state.quiz_search_titles = st.session_state.quiz_result
+                st.rerun()
+
 # ---------- GENRES AT TOP: HIGH VISIBILITY ----------
 if page in ["Home", "Discover"]:
     st.markdown("<div class='section-eyebrow'>EXPLORE BY MOOD</div><div class='section-title'>Choose your genre</div><div class='genre-note'>Tap a genre to instantly filter the movies below.</div>", unsafe_allow_html=True)
@@ -570,6 +660,20 @@ if page in ["Home", "Discover"]:
     filtered = movies.copy()
     if st.session_state.selected_genre != "All":
         filtered = filtered[filtered["genre"] == st.session_state.selected_genre]
+    selected_mood = st.session_state.selected_mood
+    mood_genre_filter = {
+        "😊 Feel-good": ["Romance", "Animation", "Adventure"],
+        "🌀 Mind-bending": ["Sci-Fi"],
+        "🌑 Thrilling": ["Action", "Crime", "Horror"],
+        "💗 Emotional": ["Drama", "Romance"],
+        "🚀 Adventurous": ["Adventure", "Sci-Fi", "Animation"],
+    }
+    if selected_mood in mood_genre_filter:
+        filtered = filtered[filtered["genre"].isin(mood_genre_filter[selected_mood])]
+    quiz_titles = st.session_state.get("quiz_search_titles", [])
+    if quiz_titles:
+        filtered = filtered[filtered["title"].isin(quiz_titles)]
+        st.session_state.quiz_search_titles = []
     if search:
         mask = (
             filtered["title"].str.contains(search, case=False, na=False)
@@ -594,7 +698,7 @@ if page in ["Home", "Discover"]:
                         st.success(f"Added {movie['title']} to your watchlist.")
                     else:
                         st.info("This movie is already in your watchlist.")
-                show_trailer(movie)
+                show_trailer(movie, "browse")
 
 # ---------- RECOMMENDATIONS ----------
 if page == "Recommendations":
@@ -615,7 +719,7 @@ if page == "Recommendations":
                     st.success("Movie added to your watchlist.")
                 else:
                     st.info("This movie is already in your watchlist.")
-            show_trailer(movie)
+            show_trailer(movie, "recommendation")
 
 # ---------- WATCHLIST ----------
 if page == "My Watchlist":
@@ -627,7 +731,7 @@ if page == "My Watchlist":
             movie = movies[movies["title"] == title].iloc[0]
             with st.container():
                 show_movie_card(movie, "IN YOUR WATCHLIST")
-                show_trailer(movie)
+                show_trailer(movie, "watchlist")
                 if st.button("Remove from watchlist", key=f"remove_{title}"):
                     st.session_state.watchlist.remove(title)
                     st.rerun()
