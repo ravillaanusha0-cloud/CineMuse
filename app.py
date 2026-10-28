@@ -257,6 +257,84 @@ html, body { width:100%; height:100%; background:transparent; color:#e8eaf6; fon
 </html>
 ''', height=1, scrolling=False)
 
+# ---------- ONE-TIME CINEMUSE WELCOME INTRO ----------
+# Shows once per browser session, then fades away so it won't interrupt browsing.
+if "cinemuse_intro_shown" not in st.session_state:
+    st.session_state.cinemuse_intro_shown = True
+    st.markdown(r"""
+    <style>
+    @keyframes cm-intro-exit {
+        0%, 78% { opacity: 1; visibility: visible; }
+        100% { opacity: 0; visibility: hidden; pointer-events: none; }
+    }
+    @keyframes cm-logo-arrive {
+        0% { opacity: 0; transform: translateY(18px) scale(.82); filter: blur(10px); }
+        65% { opacity: 1; transform: translateY(-3px) scale(1.03); filter: blur(0); }
+        100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+    @keyframes cm-ring {
+        0% { transform: scale(.35) rotate(-35deg); opacity: 0; }
+        45% { opacity: .8; }
+        100% { transform: scale(1.25) rotate(25deg); opacity: 0; }
+    }
+    @keyframes cm-spark {
+        0% { transform: scale(.2); opacity: 0; }
+        45% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(.5) translateY(-24px); opacity: 0; }
+    }
+    .cm-intro-overlay {
+        position: fixed; inset: 0; z-index: 999999; display: flex;
+        align-items: center; justify-content: center; overflow: hidden;
+        background: radial-gradient(ellipse at 50% 42%, rgba(91,54,139,.40), transparent 38%),
+                    radial-gradient(ellipse at 18% 20%, rgba(255,79,145,.20), transparent 35%),
+                    radial-gradient(ellipse at 82% 78%, rgba(34,211,238,.13), transparent 35%),
+                    #070914;
+        animation: cm-intro-exit 4.2s ease forwards;
+        pointer-events: none;
+    }
+    .cm-intro-grid { position: absolute; inset: 0; opacity: .22;
+        background-image: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+        background-size: 52px 52px;
+        mask-image: radial-gradient(ellipse at center, black 8%, transparent 72%);
+    }
+    .cm-intro-content { position: relative; text-align: center; padding: 24px;
+        animation: cm-logo-arrive 1.15s cubic-bezier(.2,.8,.2,1) both; }
+    .cm-intro-emblem { position: relative; width: 94px; height: 94px; margin: 0 auto 22px;
+        display: grid; place-items: center; border-radius: 28px; font-size: 2.7rem;
+        background: linear-gradient(135deg, #ff4f91, #9a6bff 62%, #22d3ee);
+        box-shadow: 0 0 35px rgba(154,107,255,.42), 0 0 85px rgba(255,79,145,.18); }
+    .cm-intro-emblem:before, .cm-intro-emblem:after { content: ''; position: absolute; inset: -13px;
+        border: 1px solid rgba(180,157,255,.55); border-radius: 34px; animation: cm-ring 2.1s ease-out infinite; }
+    .cm-intro-emblem:after { animation-delay: .65s; border-color: rgba(34,211,238,.55); }
+    .cm-intro-title { font-family: 'Space Grotesk', Inter, sans-serif; font-size: clamp(2.7rem, 8vw, 5rem);
+        font-weight: 750; letter-spacing: -.065em; color: #fff; line-height: 1;
+        text-shadow: 0 0 35px rgba(154,107,255,.28); }
+    .cm-intro-title span { background: linear-gradient(95deg, #ff75ad, #b69aff 55%, #7ceafa);
+        -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .cm-intro-tagline { margin-top: 17px; color: #c6c5dc; font-size: .78rem;
+        letter-spacing: .25em; text-transform: uppercase; }
+    .cm-intro-line { width: 120px; height: 2px; margin: 25px auto 0; border-radius: 99px;
+        background: linear-gradient(90deg, transparent, #ff75ad, #8f7bff, #6ee7f5, transparent);
+        box-shadow: 0 0 18px rgba(154,107,255,.65); }
+    .cm-intro-spark { position: absolute; color: #fff; font-size: 1.1rem; animation: cm-spark 1.8s ease-out infinite; }
+    .cm-intro-spark.s1 { left: 20%; top: 31%; animation-delay: .2s; color: #ff8fbb; }
+    .cm-intro-spark.s2 { right: 22%; top: 37%; animation-delay: .8s; color: #8ceafa; }
+    .cm-intro-spark.s3 { right: 29%; bottom: 24%; animation-delay: 1.1s; color: #b9a2ff; }
+    @media (prefers-reduced-motion: reduce) { .cm-intro-overlay, .cm-intro-content, .cm-intro-emblem:before, .cm-intro-emblem:after, .cm-intro-spark { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+    </style>
+    <div class="cm-intro-overlay" aria-hidden="true">
+      <div class="cm-intro-grid"></div>
+      <span class="cm-intro-spark s1">✦</span><span class="cm-intro-spark s2">✧</span><span class="cm-intro-spark s3">✦</span>
+      <div class="cm-intro-content">
+        <div class="cm-intro-emblem">🎬</div>
+        <div class="cm-intro-title">Cine<span>Muse</span></div>
+        <div class="cm-intro-tagline">Every story starts with a feeling</div>
+        <div class="cm-intro-line"></div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 # ---------- MOVIE DATA ----------
 movies = pd.DataFrame([
     {"title": "Inception", "year": 2010, "genre": "Sci-Fi", "description": "Dreams, mystery, action and mind-bending science fiction", "icon": "🌀"},
