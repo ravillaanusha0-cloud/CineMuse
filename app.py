@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -10,38 +9,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-# ---------- 4-SECOND CINEMUSE INTRO ----------
-# Show once per browser session; the overlay fades away after four seconds.
-if "cinemuse_intro_shown" not in st.session_state:
-    st.session_state.cinemuse_intro_shown = True
-    st.markdown("""
-    <style>
-    #cinemuse-intro {
-        position: fixed; inset: 0; z-index: 999999;
-        display: flex; align-items: center; justify-content: center;
-        background: radial-gradient(circle at 50% 40%, #282044 0%, #11101d 48%, #070810 100%);
-        animation: cinemuseIntroFade 4s ease forwards;
-        pointer-events: none;
-    }
-    #cinemuse-intro .intro-name {
-        font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.7rem, 8vw, 5.8rem);
-        font-weight: 800; letter-spacing: -.06em; color: #fff;
-        text-shadow: 0 0 32px rgba(255,79,145,.35);
-        animation: cinemuseIntroGlow 1.5s ease-in-out infinite alternate;
-    }
-    #cinemuse-intro .intro-name span { color: #ff4f91; }
-    #cinemuse-intro .intro-tagline { margin-top: 14px; text-align: center; color: #c7bfdc;
-        font: 600 .78rem 'DM Sans', sans-serif; letter-spacing: .24em; }
-    @keyframes cinemuseIntroFade {
-        0%, 78% { opacity: 1; visibility: visible; }
-        100% { opacity: 0; visibility: hidden; }
-    }
-    @keyframes cinemuseIntroGlow { from { transform: scale(.98); opacity: .88; } to { transform: scale(1.02); opacity: 1; } }
-    @media (prefers-reduced-motion: reduce) { #cinemuse-intro { animation-duration: 4s; } }
-    </style>
-    <div id="cinemuse-intro"><div><div class="intro-name">Cine<span>Muse</span></div><div class="intro-tagline">YOUR NEXT STORY STARTS HERE</div></div></div>
-    """, unsafe_allow_html=True)
 
 # ---------- CINEMATIC THEME ----------
 st.markdown("""
@@ -197,26 +164,13 @@ footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- CINEMUSE WELCOME SOUND ----------
-# Resolve the WAV beside app.py, even when Streamlit Cloud starts from another folder.
-audio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mixkit-relaxing-harp-sweep-2628.wav")
-if os.path.isfile(audio_path):
-    try:
-        with open(audio_path, "rb") as audio_file:
-            welcome_audio = audio_file.read()
-        st.audio(welcome_audio, format="audio/wav", autoplay=False)
-    except OSError:
-        st.warning("The welcome sound could not be loaded. Please check the WAV file in your repository.")
-else:
-    st.warning("Welcome sound file is missing. Upload mixkit-relaxing-harp-sweep-2628.wav beside app.py in GitHub.")
-
 # ---------- ANIMATED AURORA / NETWORK BACKGROUND ----------
 # This iframe runs the supplied HTML/CSS/JavaScript animation separately from Streamlit.
 # The iframe is positioned behind the app using the CSS selector below.
 st.markdown("""
 <style>
 /* Keep the animation component full-screen and behind all app content. */
-div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.html"]) {
+div[data-testid="stElementContainer"]:has(iframe[title="CineMuse animated background"]) {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
@@ -226,7 +180,7 @@ div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.
     margin: 0 !important;
     padding: 0 !important;
 }
-div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.html"]) iframe {
+div[data-testid="stElementContainer"]:has(iframe[title="CineMuse animated background"]) iframe {
     width: 100vw !important;
     height: 100vh !important;
     border: 0 !important;
@@ -320,32 +274,6 @@ movies = pd.DataFrame([
 ])
 
 movies["features"] = movies["genre"] + " " + movies["description"]
-
-# ---------- MOVIE TRAILERS ----------
-# Verified YouTube trailer IDs are embedded directly in CineMuse.
-# For titles without a verified ID, provide a YouTube search link instead of guessing a video.
-trailer_ids = {
-    "Inception": "ig1GrJI5dSg",
-    "Interstellar": "zSWdZVtXT7E",
-    "Pride and Prejudice": "1dYv5u6v55Y",
-    "Toy Story": "KYz2wyBy3kc",
-}
-movies["trailer_id"] = movies["title"].map(trailer_ids)
-movies["trailer_url"] = movies["title"].apply(
-    lambda title: "https://www.youtube.com/results?search_query="
-    + title.replace(" ", "+")
-    + "+official+trailer"
-)
-
-def show_trailer(movie):
-    """Display a trailer inline when a verified video ID is available."""
-    with st.expander("▶ Watch trailer on this page", expanded=False):
-        trailer_id = movie.get("trailer_id")
-        if pd.notna(trailer_id) and trailer_id:
-            st.video(f"https://www.youtube.com/watch?v={trailer_id}")
-        else:
-            st.info("An embedded trailer is not configured for this title yet.")
-            st.link_button("Find official trailer on YouTube", movie["trailer_url"], use_container_width=True)
 vectorizer = TfidfVectorizer(stop_words="english")
 movie_vectors = vectorizer.fit_transform(movies["features"])
 similarity = cosine_similarity(movie_vectors)
@@ -467,7 +395,6 @@ if page in ["Home", "Discover"]:
                         st.success(f"Added {movie['title']} to your watchlist.")
                     else:
                         st.info("This movie is already in your watchlist.")
-                show_trailer(movie)
 
 # ---------- RECOMMENDATIONS ----------
 if page == "Recommendations":
@@ -496,7 +423,6 @@ if page == "Recommendations":
                     st.success("Movie added to your watchlist.")
                 else:
                     st.info("This movie is already in your watchlist.")
-            show_trailer(movie)
 
 # ---------- WATCHLIST ----------
 if page == "My Watchlist":
@@ -514,7 +440,6 @@ if page == "My Watchlist":
                   <div class="movie-description">{movie['description']}</div>
                 </div>
                 """, unsafe_allow_html=True)
-                show_trailer(movie)
                 if st.button("Remove from watchlist", key=f"remove_{title}"):
                     st.session_state.watchlist.remove(title)
                     st.rerun()
