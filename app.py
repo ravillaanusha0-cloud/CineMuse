@@ -25,157 +25,14 @@ st.markdown("""
     --violet: #9a6bff;
     --line: rgba(255,255,255,.10);
 }
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Recommender Background</title>
-<style>
-  :root {
-    --bg: #070914;
-    --c1: #6d5efc;   /* violet */
-    --c2: #22d3ee;   /* cyan */
-    --c3: #f472b6;   /* pink */
-  }
-  * { box-sizing: border-box; margin: 0; }
-  html, body { height: 100%; background: var(--bg); color: #e8eaf6;
-    font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif; overflow: hidden; }
-
-  /* ===== BACKGROUND LAYERS (copy .bg and everything inside into your app) ===== */
-  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); }
-
-  /* 1. Aurora gradient blobs */
-  .blob { position: absolute; width: 55vmax; height: 55vmax; border-radius: 50%;
-    filter: blur(90px); opacity: .45; will-change: transform;
-    animation: drift 24s ease-in-out infinite alternate; }
-  .b1 { background: var(--c1); top: -20vmax; left: -15vmax; }
-  .b2 { background: var(--c2); bottom: -25vmax; right: -15vmax; animation-duration: 30s; opacity: .35; }
-  .b3 { background: var(--c3); top: 30%; left: 45%; width: 35vmax; height: 35vmax;
-        animation-duration: 36s; opacity: .22; }
-  @keyframes drift {
-    from { transform: translate3d(0,0,0) scale(1); }
-    to   { transform: translate3d(8vmax,6vmax,0) scale(1.18); }
-  }
-
-  /* 2. Perspective grid fading out */
-  .grid { position: absolute; inset: 0;
-    background-image:
-      linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
-    background-size: 56px 56px;
-    -webkit-mask-image: radial-gradient(ellipse at 50% 40%, #000 20%, transparent 75%);
-            mask-image: radial-gradient(ellipse at 50% 40%, #000 20%, transparent 75%); }
-
-  /* 3. Network canvas (recommendation graph) */
-  #net { position: absolute; inset: 0; width: 100%; height: 100%; }
-
-  /* 4. Vignette + film grain for depth */
-  .vignette { position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,.65) 100%); }
-  .grain { position: absolute; inset: 0; opacity: .06; mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
-
-  @media (prefers-reduced-motion: reduce) { .blob { animation: none; } }
-
-  /* ===== DEMO CONTENT (delete) ===== */
-  .demo { min-height: 100%; display: grid; place-items: center; padding: 24px; }
-  .card { width: min(520px, 100%); padding: 32px; border-radius: 24px;
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-    backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
-    box-shadow: 0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.15); }
-  .card h1 { font-size: 28px; letter-spacing: -.02em; margin-bottom: 8px;
-    background: linear-gradient(90deg, #fff, #a5b4fc 60%, #67e8f9); -webkit-background-clip: text;
-    background-clip: text; color: transparent; }
-  .card p { color: #aab0d0; line-height: 1.55; margin-bottom: 20px; }
-  .btn { display: inline-block; padding: 12px 22px; border-radius: 12px; font-weight: 600; color: #fff;
-    background: linear-gradient(135deg, var(--c1), var(--c2)); box-shadow: 0 8px 24px rgba(109,94,252,.45); }
-</style>
-</head>
-<body>
-
-<div class="bg">
-  <div class="blob b1"></div>
-  <div class="blob b2"></div>
-  <div class="blob b3"></div>
-  <div class="grid"></div>
-  <canvas id="net"></canvas>
-  <div class="vignette"></div>
-  <div class="grain"></div>
-</div>
-
-<div class="demo">
-  <div class="card">
-    <h1>Recommended for you</h1>
-    <p>Your background is live. Move the mouse and the nodes react, just like users and items connecting in a recommendation graph.</p>
-    <span class="btn">Explore</span>
-  </div>
-</div>
-
-<script>
-(() => {
-  const cv = document.getElementById('net'), ctx = cv.getContext('2d');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let W, H, DPR, nodes = [], mouse = { x: -9999, y: -9999 };
-  const COLORS = ['109,94,252', '34,211,238', '244,114,182'];
-
-  function resize() {
-    DPR = Math.min(devicePixelRatio || 1, 2);
-    W = cv.clientWidth; H = cv.clientHeight;
-    cv.width = W * DPR; cv.height = H * DPR;
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    const count = Math.round(Math.min(110, (W * H) / 16000));
-    nodes = Array.from({ length: count }, () => ({
-      x: Math.random() * W, y: Math.random() * H,
-      vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35,
-      r: Math.random() * 1.8 + .8,
-      c: COLORS[(Math.random() * COLORS.length) | 0],
-      p: Math.random() * Math.PI * 2
-    }));
-  }
-
-  function frame(t) {
-    ctx.clearRect(0, 0, W, H);
-    const LINK = Math.min(150, W / 6);
-    for (let i = 0; i < nodes.length; i++) {
-      const a = nodes[i];
-      if (!reduce) {
-        a.x += a.vx; a.y += a.vy;
-        if (a.x < 0 || a.x > W) a.vx *= -1;
-        if (a.y < 0 || a.y > H) a.vy *= -1;
-        const dx = a.x - mouse.x, dy = a.y - mouse.y, d = Math.hypot(dx, dy);
-        if (d < 140) { a.x += dx / d * 1.2; a.y += dy / d * 1.2; }
-      }
-      for (let j = i + 1; j < nodes.length; j++) {
-        const b = nodes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
-        if (d < LINK) {
-          ctx.strokeStyle = `rgba(${a.c},${(1 - d / LINK) * .35})`;
-          ctx.lineWidth = .8;
-          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-        }
-      }
-      const pulse = .6 + .4 * Math.sin(t / 900 + a.p);
-      const g = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, a.r * 7);
-      g.addColorStop(0, `rgba(${a.c},${.55 * pulse})`);
-      g.addColorStop(1, `rgba(${a.c},0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(a.x, a.y, a.r * 7, 0, 7); ctx.fill();
-      ctx.fillStyle = `rgba(255,255,255,${.7 * pulse + .3})`;
-      ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, 7); ctx.fill();
-    }
-    if (!reduce) requestAnimationFrame(frame);
-  }
-
-  addEventListener('resize', resize);
-  addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-  addEventListener('pointerleave', () => { mouse.x = mouse.y = -9999; });
-  resize(); requestAnimationFrame(frame);
-})();
-</script>
-</body>
-</html>
-
-
+.stApp {
+    background:
+      radial-gradient(ellipse at 12% 0%, rgba(119, 69, 205, .18), transparent 34%),
+      radial-gradient(ellipse at 95% 10%, rgba(255, 79, 145, .11), transparent 28%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+}
 [data-testid="stHeader"] { background: rgba(9,10,16,.72); }
 .block-container { padding-top: 1.7rem; padding-bottom: 3rem; max-width: 1450px; }
 h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif !important; color: var(--text) !important; }
@@ -196,7 +53,16 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] > label {
     text-transform: uppercase;
     margin-bottom: .8rem;
 }
-background: rgba(255,255,255,.045);
+section[data-testid="stSidebar"] [data-testid="stRadio"] > div { gap: .42rem; }
+section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    border: 1px solid transparent;
+    border-radius: 13px;
+    padding: .58rem .7rem;
+    margin: 0;
+    transition: all .18s ease;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+    background: rgba(255,255,255,.045);
     border-color: rgba(255,255,255,.08);
 }
 section[data-testid="stSidebar"] [data-testid="stRadio"] label p { color: #e5e3ef !important; font-weight: 600; }
@@ -298,6 +164,99 @@ footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
+# ---------- ANIMATED AURORA / NETWORK BACKGROUND ----------
+# This iframe runs the supplied HTML/CSS/JavaScript animation separately from Streamlit.
+# The iframe is positioned behind the app using the CSS selector below.
+st.markdown("""
+<style>
+/* Keep the animation component full-screen and behind all app content. */
+div[data-testid="stElementContainer"]:has(iframe[title="CineMuse animated background"]) {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+div[data-testid="stElementContainer"]:has(iframe[title="CineMuse animated background"]) iframe {
+    width: 100vw !important;
+    height: 100vh !important;
+    border: 0 !important;
+    background: transparent !important;
+    pointer-events: none !important;
+}
+/* Place Streamlit UI above the decorative background. */
+[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="stMain"] {
+    position: relative;
+    z-index: 1;
+}
+[data-testid="stMain"] { background: transparent !important; }
+</style>
+""", unsafe_allow_html=True)
+
+import streamlit.components.v1 as components
+
+components.html(r'''
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root { --bg:#070914; --c1:#6d5efc; --c2:#22d3ee; --c3:#f472b6; }
+* { box-sizing:border-box; margin:0; }
+html, body { width:100%; height:100%; background:transparent; color:#e8eaf6; font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif; overflow:hidden; }
+.bg { position:fixed; inset:0; z-index:0; overflow:hidden; background:var(--bg); pointer-events:none; }
+.blob { position:absolute; width:55vmax; height:55vmax; border-radius:50%; filter:blur(90px); opacity:.45; will-change:transform; animation:drift 24s ease-in-out infinite alternate; }
+.b1 { background:var(--c1); top:-20vmax; left:-15vmax; }
+.b2 { background:var(--c2); bottom:-25vmax; right:-15vmax; animation-duration:30s; opacity:.35; }
+.b3 { background:var(--c3); top:30%; left:45%; width:35vmax; height:35vmax; animation-duration:36s; opacity:.22; }
+@keyframes drift { from { transform:translate3d(0,0,0) scale(1); } to { transform:translate3d(8vmax,6vmax,0) scale(1.18); } }
+.grid { position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px); background-size:56px 56px; -webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 75%); mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 75%); }
+#net { position:absolute; inset:0; width:100%; height:100%; }
+.vignette { position:absolute; inset:0; background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.48) 100%); }
+.grain { position:absolute; inset:0; opacity:.06; mix-blend-mode:overlay; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+@media (prefers-reduced-motion: reduce) { .blob { animation:none; } }
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grid"></div><canvas id="net"></canvas><div class="vignette"></div><div class="grain"></div></div>
+<script>
+(() => {
+  const cv=document.getElementById('net'), ctx=cv.getContext('2d');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W=0,H=0,DPR=1,nodes=[],mouse={x:-9999,y:-9999};
+  const COLORS=['109,94,252','34,211,238','244,114,182'];
+  function resize(){
+    DPR=Math.min(devicePixelRatio||1,2); W=cv.clientWidth; H=cv.clientHeight;
+    cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+    const count=Math.round(Math.min(110,(W*H)/16000));
+    nodes=Array.from({length:count},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*1.8+.8,c:COLORS[(Math.random()*COLORS.length)|0],p:Math.random()*Math.PI*2}));
+  }
+  function frame(t){
+    ctx.clearRect(0,0,W,H); const LINK=Math.min(150,W/6);
+    for(let i=0;i<nodes.length;i++){
+      const a=nodes[i];
+      if(!reduce){ a.x+=a.vx; a.y+=a.vy; if(a.x<0||a.x>W)a.vx*=-1; if(a.y<0||a.y>H)a.vy*=-1; const dx=a.x-mouse.x,dy=a.y-mouse.y,d=Math.hypot(dx,dy); if(d<140&&d>0){a.x+=dx/d*1.2;a.y+=dy/d*1.2;} }
+      for(let j=i+1;j<nodes.length;j++){const b=nodes[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<LINK){ctx.strokeStyle=`rgba(${a.c},${(1-d/LINK)*.35})`;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}
+      const pulse=.6+.4*Math.sin(t/900+a.p); const g=ctx.createRadialGradient(a.x,a.y,0,a.x,a.y,a.r*7);g.addColorStop(0,`rgba(${a.c},${.55*pulse})`);g.addColorStop(1,`rgba(${a.c},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(a.x,a.y,a.r*7,0,Math.PI*2);ctx.fill();ctx.fillStyle=`rgba(255,255,255,${.7*pulse+.3})`;ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,Math.PI*2);ctx.fill();
+    }
+    if(!reduce)requestAnimationFrame(frame);
+  }
+  addEventListener('resize',resize);
+  // Listen on the parent document too, so pointer response works while the iframe is behind the UI.
+  try { parent.document.addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;}); } catch(e) {}
+  addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+  addEventListener('pointerleave',()=>{mouse.x=mouse.y=-9999;});
+  resize(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
+''', height=1, scrolling=False)
+
 # ---------- MOVIE DATA ----------
 movies = pd.DataFrame([
     {"title": "Inception", "year": 2010, "genre": "Sci-Fi", "description": "Dreams, mystery, action and mind-bending science fiction", "icon": "🌀"},
@@ -343,13 +302,21 @@ with st.sidebar:
     page = st.radio(
         "EXPLORE",
         ["Home", "Discover", "Recommendations", "My Watchlist"],
-        format_func=lambda x: {
-            "Home": "⌂   Home",
-            "Discover": "✦   Discover",
-            "Recommendations": "✧   For You",
-            "My Watchlist": "♡   My Watchlist",
-        }[x],
+        format_func=lambda x: {"Home": "⌂   Home", "Discover": "✦   Discover", "Recommendations": "✧   For You", "My Watchlist": "♡   My Watchlist"}[x],
         label_visibility="visible",
+    )
+    st.markdown(
+        "<div style='height:1px;background:rgba(255,255,255,.08);margin:1.35rem 0 1.5rem;'></div>"
+        "<div style='font-size:.72rem;letter-spacing:.14em;font-weight:800;color:#e7e2f5;margin-bottom:.85rem;'>A LITTLE MOVIE MAGIC</div>"
+        "<div style='position:relative;overflow:hidden;padding:18px 16px;border-radius:19px;"
+        "background:radial-gradient(circle at 100% 0%,rgba(255,79,145,.22),transparent 45%),"
+        "linear-gradient(145deg,rgba(154,107,255,.14),rgba(255,255,255,.025));"
+        "border:1px solid rgba(190,143,255,.18);'>"
+        "<div style='font-size:1.3rem;margin-bottom:10px;'>✦ <span style='color:#ff8fbb;'>✧</span> ✦</div>"
+        "<div style='font-family:Space Grotesk,sans-serif;font-size:1.08rem;font-weight:700;color:#fff;margin-bottom:6px;'>Find your next favourite.</div>"
+        "<div style='font-size:.88rem;line-height:1.65;color:#b9b5cb;'>Little escapes. Big feelings. Stories made for your mood.</div>"
+        "</div>",
+        unsafe_allow_html=True,
     )
     st.markdown("<div style='margin-top:1.2rem;font-size:.72rem;color:#777b91;'>MADE FOR YOUR NEXT MOVIE NIGHT · ✦</div>", unsafe_allow_html=True)
 
@@ -476,3 +443,5 @@ if page == "My Watchlist":
                 if st.button("Remove from watchlist", key=f"remove_{title}"):
                     st.session_state.watchlist.remove(title)
                     st.rerun()
+
+st.markdown("<div style='text-align:center;color:#777b91;font-size:.78rem;padding:2rem 0 0;'>CINEMUSE &nbsp; ✦ &nbsp; DISCOVER SOMETHING THAT MOVES YOU</div>", unsafe_allow_html=True)
