@@ -38,11 +38,25 @@ st.markdown("""
 h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif !important; color: var(--text) !important; }
 p, label, .stMarkdown { color: #e1e3ee; }
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #11121d 0%, #0b0c13 100%);
-    border-right: 1px solid var(--line);
+    background:
+      radial-gradient(ellipse at 10% 0%, rgba(154,107,255,.15), transparent 34%),
+      linear-gradient(180deg, #11121d 0%, #0b0c13 100%);
+    border-right: 1px solid rgba(255,255,255,.08);
 }
-section[data-testid="stSidebar"] h1 { font-size: 1.8rem; }
-section[data-testid="stSidebar"] [data-testid="stRadio"] label { color: #d9daea; }
+section[data-testid="stSidebar"] > div { padding-top: 1.25rem; }
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #a9adc0; }
+section[data-testid="stSidebar"] [data-testid="stRadio"] > label {
+    color: #f1effa !important;
+    font-size: .77rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: .8rem;
+}
+background: rgba(255,255,255,.045);
+    border-color: rgba(255,255,255,.08);
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label p { color: #e5e3ef !important; font-weight: 600; }
 div[data-testid="stTextInput"] input, div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
     background: #141622 !important;
     color: #fff !important;
@@ -169,23 +183,26 @@ if "selected_genre" not in st.session_state:
 
 # ---------- SIDEBAR ----------
 with st.sidebar:
-    st.markdown("## 🎬 CineMuse")
-    st.caption("DISCOVER  ·  WATCH  ·  REPEAT")
-    st.markdown("---")
-    page = st.radio(
-        "YOUR SPACE",
-        ["Home", "Discover", "Recommendations", "My Watchlist"],
-        label_visibility="visible",
-    )
-    st.markdown("---")
-    st.markdown("**YOUR MOVIE MOOD**")
-    st.caption("Pick a genre on the main page to filter the collection.")
     st.markdown(
-        "<div style='padding:14px;border-radius:14px;background:linear-gradient(135deg,#21172e,#171421);border:1px solid #392943;color:#c7c3d9;'>"
-        "<span style='color:#ff8fbb;font-weight:700;'>GOOD MOVIES.</span><br>"
-        "Better moods. New worlds. Stories that stay with you. ✦</div>",
+        "<div style='display:flex;align-items:center;gap:12px;margin:.25rem 0 1.1rem;'>"
+        "<div style='width:46px;height:46px;display:flex;align-items:center;justify-content:center;"
+        "border-radius:15px;background:linear-gradient(135deg,#ff4f91,#9a6bff);"
+        "box-shadow:0 8px 25px rgba(154,107,255,.22);font-size:1.45rem;'>🎬</div>"
+        "<div><div style='font-family:Space Grotesk,sans-serif;font-size:1.55rem;font-weight:750;"
+        "letter-spacing:-.05em;color:#f7f5ff;line-height:1.1;'>CineMuse</div>"
+        "<div style='font-size:.68rem;letter-spacing:.14em;color:#969ab0;margin-top:5px;'>YOUR MOVIE UNIVERSE</div></div></div>",
         unsafe_allow_html=True,
     )
+    st.markdown(
+        "<div style='height:1px;background:linear-gradient(90deg,rgba(255,79,145,.65),rgba(154,107,255,.12),transparent);margin:0 0 1.5rem;'></div>",
+        unsafe_allow_html=True,
+    )
+    page = st.radio(
+        "EXPLORE",
+                "</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div style='margin-top:1.2rem;font-size:.72rem;color:#777b91;'>MADE FOR YOUR NEXT MOVIE NIGHT · ✦</div>", unsafe_allow_html=True)
 
 # ---------- HEADER / HERO ----------
 left, right = st.columns([5, 1])
@@ -310,5 +327,3 @@ if page == "My Watchlist":
                 if st.button("Remove from watchlist", key=f"remove_{title}"):
                     st.session_state.watchlist.remove(title)
                     st.rerun()
-
-st.markdown("<div style='text-align:center;color:#777b91;font-size:.78rem;padding:2rem 0 0;'>CINEMUSE &nbsp; ✦ &nbsp; DISCOVER SOMETHING THAT MOVES YOU</div>", unsafe_allow_html=True)
