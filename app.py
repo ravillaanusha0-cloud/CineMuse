@@ -420,16 +420,20 @@ movies["trailer_url"] = movies["title"].apply(
 
 
 def show_poster(movie):
-    """Display the TMDB poster when available; otherwise keep the original icon."""
+    """Display the TMDB poster with spacing; use the icon if no poster is available."""
     poster_url = movie.get("poster_url")
-    if isinstance(poster_url, str) and poster_url:
-        st.image(poster_url, use_column_width=True)
+    has_poster = isinstance(poster_url, str) and bool(poster_url)
+    if has_poster:
+        st.image(poster_url, use_container_width=True)
+        # Keep the app's title card clearly below the poster artwork.
+        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
     else:
         st.markdown(
             f"<div class='movie-icon' style='font-size:3rem;text-align:center;padding:.7rem 0;'>"
             f"{movie['icon']}</div>",
             unsafe_allow_html=True,
         )
+    return has_poster
 
 
 def show_trailer(movie):
@@ -558,10 +562,10 @@ if page in ["Home", "Discover"]:
         cols = st.columns(3)
         for i, (_, movie) in enumerate(filtered.iterrows()):
             with cols[i % 3]:
-                show_poster(movie)
+                has_poster = show_poster(movie)
                 st.markdown(f"""
                 <div class="movie-card">
-                  <div class="movie-icon">{movie['icon']}</div>
+                  {'' if has_poster else f"<div class='movie-icon'>{movie['icon']}</div>"}
                   <div class="movie-title">{movie['title']}</div>
                   <div class="movie-meta">{movie['year']} &nbsp;·&nbsp; {movie['genre']}</div>
                   <div class="movie-description">{movie['description']}</div>
@@ -588,10 +592,10 @@ if page == "Recommendations":
     for pos, index in enumerate(recommended_indices):
         movie = movies.iloc[index]
         with cols[pos % 3]:
-            show_poster(movie)
+            has_poster = show_poster(movie)
             st.markdown(f"""
             <div class="movie-card">
-              <div class="movie-icon">{movie['icon']}</div>
+              {'' if has_poster else f"<div class='movie-icon'>{movie['icon']}</div>"}
               <div class="movie-title">{movie['title']}</div>
               <div class="movie-meta">{movie['year']} &nbsp;·&nbsp; {movie['genre']}</div>
               <div class="movie-description">{movie['description']}</div>
@@ -617,7 +621,7 @@ if page == "My Watchlist":
             with st.container():
                 show_poster(movie)
                 st.markdown(f"""
-                <div class="movie-card" style="min-height:0;">
+                <div class="movie-card" style="min-height:0; margin-top:4px;">
                   <div class="movie-title">{movie['icon']} &nbsp; {movie['title']}</div>
                   <div class="movie-meta">{movie['year']} &nbsp;·&nbsp; {movie['genre']}</div>
                   <div class="movie-description">{movie['description']}</div>
