@@ -12,8 +12,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ---------- 4-SECOND CINEMUSE INTRO ----------
-# Show once per browser session; the overlay fades away after four seconds.
+# ---------- CINEMUSE INTRO + SIDEBAR REVEAL ----------
+# Intro fades after 4 seconds; the sidebar animates in as it finishes.
 if "cinemuse_intro_shown" not in st.session_state:
     st.session_state.cinemuse_intro_shown = True
     st.markdown("""
@@ -76,20 +76,26 @@ st.markdown("""
 .block-container { padding-top: 1.7rem; padding-bottom: 3rem; max-width: 1450px; }
 h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif !important; color: var(--text) !important; }
 p, label, .stMarkdown { color: #e1e3ee; }
-/* Keep the navigation panel visible instead of letting it start collapsed. */
+/* Reveal the sidebar as the 4-second intro fades away. */
+@keyframes cinemuseSidebarReveal {
+    0% { opacity: 0; transform: translateX(-18px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
 [data-testid="stSidebar"] {
     display: block !important;
     visibility: visible !important;
     min-width: 280px !important;
     width: 280px !important;
     flex-shrink: 0 !important;
-    transform: none !important;
     opacity: 1 !important;
     z-index: 100 !important;
+    animation: cinemuseSidebarReveal .65s ease-out 3.4s both;
 }
 [data-testid="stSidebar"] > div {
     width: 280px !important;
 }
+/* Keep Streamlit's sidebar toggle accessible on narrow screens. */
+[data-testid="collapsedControl"] { visibility: visible !important; opacity: 1 !important; }
 section[data-testid="stSidebar"] {
     background:
       radial-gradient(ellipse at 10% 0%, rgba(154,107,255,.15), transparent 34%),
