@@ -76,6 +76,20 @@ st.markdown("""
 .block-container { padding-top: 1.7rem; padding-bottom: 3rem; max-width: 1450px; }
 h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif !important; color: var(--text) !important; }
 p, label, .stMarkdown { color: #e1e3ee; }
+/* Keep the navigation panel visible instead of letting it start collapsed. */
+[data-testid="stSidebar"] {
+    display: block !important;
+    visibility: visible !important;
+    min-width: 280px !important;
+    width: 280px !important;
+    flex-shrink: 0 !important;
+    transform: none !important;
+    opacity: 1 !important;
+    z-index: 100 !important;
+}
+[data-testid="stSidebar"] > div {
+    width: 280px !important;
+}
 section[data-testid="stSidebar"] {
     background:
       radial-gradient(ellipse at 10% 0%, rgba(154,107,255,.15), transparent 34%),
