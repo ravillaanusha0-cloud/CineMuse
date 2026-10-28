@@ -221,7 +221,7 @@ else:
 st.markdown("""
 <style>
 /* Keep the animation component full-screen and behind all app content. */
-div[data-testid="stElementContainer"]:has(iframe) {
+div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.html"]) {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
@@ -231,7 +231,7 @@ div[data-testid="stElementContainer"]:has(iframe) {
     margin: 0 !important;
     padding: 0 !important;
 }
-div[data-testid="stElementContainer"]:has(iframe) iframe {
+div[data-testid="stElementContainer"]:has(iframe[title="streamlit_components.v1.html"]) iframe {
     width: 100vw !important;
     height: 100vh !important;
     border: 0 !important;
@@ -379,7 +379,7 @@ with st.sidebar:
     page = st.radio(
         "EXPLORE",
         ["Home", "Discover", "Recommendations", "My Watchlist"],
-        format_func=lambda x: {"Home": "⌂   Home", "Discover": "✦   Discover", "Recommendations": "✧   For You", "My Watchlist": "♡   My Watchlist"}[x],
+        format_func=lambda x: {"Home": "🏠   Home", "Discover": "🔎   Discover", "Recommendations": "✨   For You", "My Watchlist": "♡   My Watchlist"}[x],
         label_visibility="visible",
     )
     st.markdown(
