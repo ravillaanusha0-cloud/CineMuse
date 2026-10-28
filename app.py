@@ -199,8 +199,14 @@ with st.sidebar:
     )
     page = st.radio(
         "EXPLORE",
-                "</div>",
-        unsafe_allow_html=True,
+        ["Home", "Discover", "Recommendations", "My Watchlist"],
+        format_func=lambda x: {
+            "Home": "⌂   Home",
+            "Discover": "✦   Discover",
+            "Recommendations": "✧   For You",
+            "My Watchlist": "♡   My Watchlist",
+        }[x],
+        label_visibility="visible",
     )
     st.markdown("<div style='margin-top:1.2rem;font-size:.72rem;color:#777b91;'>MADE FOR YOUR NEXT MOVIE NIGHT · ✦</div>", unsafe_allow_html=True)
 
