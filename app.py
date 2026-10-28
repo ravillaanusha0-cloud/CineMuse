@@ -169,9 +169,11 @@ footer { visibility: hidden; }
 audio_file = "mixkit-relaxing-harp-sweep-2628.wav"
 
 if os.path.exists(audio_file):
-    st.audio(audio_file, format="audio/wav", autoplay=True)
+    st.markdown("<div class='section-eyebrow'>A LITTLE CINEMUSE MAGIC</div>", unsafe_allow_html=True)
+    # Browsers may block autoplay; visitors can press Play here.
+    st.audio(audio_file, format="audio/wav", autoplay=False)
 else:
-    st.error("Audio file not found: " + audio_file)
+    st.caption("✨ Welcome sound is unavailable. Add the WAV file beside app.py to enable it.")
 
 # ---------- ANIMATED AURORA / NETWORK BACKGROUND ----------
 # This iframe runs the supplied HTML/CSS/JavaScript animation separately from Streamlit.
@@ -283,6 +285,14 @@ movies = pd.DataFrame([
 ])
 
 movies["features"] = movies["genre"] + " " + movies["description"]
+
+# ---------- MOVIE TRAILERS ----------
+# Opens YouTube search results for each movie's official trailer.
+movies["trailer_url"] = movies["title"].apply(
+    lambda title: "https://www.youtube.com/results?search_query="
+    + title.replace(" ", "+")
+    + "+official+trailer"
+)
 vectorizer = TfidfVectorizer(stop_words="english")
 movie_vectors = vectorizer.fit_transform(movies["features"])
 similarity = cosine_similarity(movie_vectors)
@@ -404,6 +414,12 @@ if page in ["Home", "Discover"]:
                         st.success(f"Added {movie['title']} to your watchlist.")
                     else:
                         st.info("This movie is already in your watchlist.")
+                st.link_button(
+                    "▶ Watch Trailer",
+                    movie["trailer_url"],
+                    use_container_width=True,
+                    key=f"trailer_{movie['title']}"
+                )
 
 # ---------- RECOMMENDATIONS ----------
 if page == "Recommendations":
@@ -432,6 +448,12 @@ if page == "Recommendations":
                     st.success("Movie added to your watchlist.")
                 else:
                     st.info("This movie is already in your watchlist.")
+            st.link_button(
+                "▶ Watch Trailer",
+                movie["trailer_url"],
+                use_container_width=True,
+                key=f"rec_trailer_{movie['title']}"
+            )
 
 # ---------- WATCHLIST ----------
 if page == "My Watchlist":
@@ -449,6 +471,12 @@ if page == "My Watchlist":
                   <div class="movie-description">{movie['description']}</div>
                 </div>
                 """, unsafe_allow_html=True)
+                st.link_button(
+                    "▶ Watch Trailer",
+                    movie["trailer_url"],
+                    use_container_width=True,
+                    key=f"watchlist_trailer_{title}"
+                )
                 if st.button("Remove from watchlist", key=f"remove_{title}"):
                     st.session_state.watchlist.remove(title)
                     st.rerun()
