@@ -518,14 +518,15 @@ if page == "My Watchlist":
                   <div class="movie-description">{movie['description']}</div>
                 </div>
                 """, unsafe_allow_html=True)
-                if st.button("Remove from watchlist", key=f"remove_{title}"):
-                    st.session_state.watchlist.remove(title)
-                    st.rerun()
 # ---------- CINEMUSE WELCOME SOUND ----------
 st.audio(
     "mixkit-relaxing-harp-sweep-2628.wav",
     format="audio/wav",
     autoplay=True,
 )
+
+                if st.button("Remove from watchlist", key=f"remove_{title}"):
+                    st.session_state.watchlist.remove(title)
+                    st.rerun()
 
 st.markdown("<div style='text-align:center;color:#777b91;font-size:.78rem;padding:2rem 0 0;'>CINEMUSE &nbsp; ✦ &nbsp; DISCOVER SOMETHING THAT MOVES YOU</div>", unsafe_allow_html=True)
